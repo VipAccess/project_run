@@ -27,6 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+COMPANY_NAME = 'Red Sneakers'
+SLOGAN = 'Одна нога здесь, другая там!'
+CONTACTS = 'Город Слуцк, улица Ленина, дом 30'
+
 
 # Application definition
 
