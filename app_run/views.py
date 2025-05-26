@@ -6,6 +6,7 @@ from .serializers import RunSerializer, UserSerializer
 from .models import Run
 from django.contrib.auth.models import User
 from project_run.settings import base
+from rest_framework.filters import SearchFilter
 
 
 @api_view(['GET'])
@@ -25,6 +26,8 @@ class RunViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['first_name', 'last_name']
 
     def get_queryset(self):
         qs = self.queryset
