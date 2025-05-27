@@ -7,6 +7,9 @@ from .models import Run
 from django.contrib.auth.models import User
 from project_run.settings import base
 from rest_framework.filters import SearchFilter
+from rest_framework.views import APIView
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 
 @api_view(['GET'])
@@ -39,3 +42,25 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             qs = qs.filter(is_superuser=False)
         return qs
+
+
+class StartRunAPIView(APIView):
+    def patch(self, request, run_id):
+        run = get_object_or_404(Run, id=run_id)
+        if run.status != 'init':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            run.status = 'in_progress'
+            run.save()
+            return Response({"status": "updated"})
+
+
+class StopRunAPIView(APIView):
+    def patch(self, request, run_id):
+        run = get_object_or_404(Run, id=run_id)
+        if run.status == 'init':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            run.status = 'finished'
+            run.save()
+            return Response({"status": "updated"})
