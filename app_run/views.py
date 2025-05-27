@@ -58,7 +58,7 @@ class StartRunAPIView(APIView):
 class StopRunAPIView(APIView):
     def post(self, request, run_id):
         run = get_object_or_404(Run, id=run_id)
-        if run.status == 'init':
+        if run.status != 'in_progress':
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             run.status = 'finished'
