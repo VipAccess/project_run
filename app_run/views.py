@@ -45,7 +45,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StartRunAPIView(APIView):
-    def patch(self, request, run_id):
+    def post(self, request, run_id):
         run = get_object_or_404(Run, id=run_id)
         if run.status != 'init':
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -56,7 +56,7 @@ class StartRunAPIView(APIView):
 
 
 class StopRunAPIView(APIView):
-    def patch(self, request, run_id):
+    def post(self, request, run_id):
         run = get_object_or_404(Run, id=run_id)
         if run.status == 'init':
             return Response(status=status.HTTP_400_BAD_REQUEST)
