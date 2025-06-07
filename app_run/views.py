@@ -89,7 +89,7 @@ class AthleteInfoAPIView(APIView):
         goals = request.query_params.get('goals')
         if weight is None or 0 < int(weight) < 900:
             athlete_info, created = AthleteInfo.objects.get_or_create(
-                user_id=user, weight=weight, goals=goals)
+                user_id=user, weight='30', goals='start')
         else:
             return Response({'error': 'Invalid weight'},
                             status=status.HTTP_400_BAD_REQUEST)
