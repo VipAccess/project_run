@@ -96,7 +96,8 @@ class AthleteInfoAPIView(APIView):
                 }
             )
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid weight'},
+                            status=status.HTTP_400_BAD_REQUEST)
         return Response({'user_id': user_id, 'weight': weight, 'goals': goals})
 
     def put(self, request, user_id):
@@ -113,4 +114,8 @@ class AthleteInfoAPIView(APIView):
             )
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_201_CREATED)
+        return Response({
+            "user_id": user_id,
+            "weight": weight,
+            "goals": goals,
+        }, status=status.HTTP_201_CREATED)
