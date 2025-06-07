@@ -2,8 +2,8 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
-from .serializers import RunSerializer, UserSerializer
-from .models import Run
+from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
+from .models import Run, AthleteInfo
 from django.contrib.auth.models import User
 from project_run.settings import base
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -80,3 +80,38 @@ class StopRunAPIView(APIView):
             run.status = 'finished'
             run.save()
             return Response({"status": "updated"})
+
+
+class AthleteInfoAPIView(APIView):
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        weight = request.query_params.get('weight')
+        goals = request.query_params.get('goals')
+        if weight is None or 0 < int(weight) < 900:
+            athlete_info, created = AthleteInfo.objects.get_or_create(
+                user_id=user,
+                defaults={
+                    'weight': weight,
+                    'goals': goals,
+                }
+            )
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        serializer = AthleteInfoSerializer(athlete_info)
+        return Response(serializer.data)
+
+    def put(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        weight = request.query_params.get('weight')
+        goals = request.query_params.get('goals')
+        if weight is None or 0 < int(weight) < 900:
+            athlete, created = AthleteInfo.objects.update_or_create(
+                user_id=user,
+                defaults={
+                    'weight': weight,
+                    'goals': goals,
+                }
+            )
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
