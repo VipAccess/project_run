@@ -87,11 +87,7 @@ class AthleteInfoAPIView(APIView):
         user = get_object_or_404(User, id=user_id)
         weight = request.query_params.get('weight')
         goals = request.query_params.get('goals')
-        if weight is None:
-            weight = 50
-        if goals is None:
-            goals = 'Для'
-        if 0 < int(weight) < 900:
+        if weight is None or 0 < int(weight) < 900:
             athlete_info, created = AthleteInfo.objects.get_or_create(
                 user_id=user,
                 defaults={
