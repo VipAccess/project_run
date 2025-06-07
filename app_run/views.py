@@ -97,8 +97,7 @@ class AthleteInfoAPIView(APIView):
             )
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        serializer = AthleteInfoSerializer(athlete_info)
-        return Response(serializer.data)
+        return Response({'user_id': user_id, 'weight': weight, 'goals': goals})
 
     def put(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
