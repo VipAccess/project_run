@@ -2,6 +2,8 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
+from urllib3 import request
+
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
 from .models import Run, AthleteInfo
 from django.contrib.auth.models import User
@@ -85,26 +87,17 @@ class StopRunAPIView(APIView):
 class AthleteInfoAPIView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        weight = request.query_params.get('weight')
-        goals = request.query_params.get('goals')
-        if weight is None or 0 < int(weight) < 900:
-            athlete_info, created = AthleteInfo.objects.get_or_create(
-                user_id=user,
-                defaults={
-                    'weight': weight,
-                    'goals': goals,
-                }
-            )
-        else:
-            return Response({'error': 'Invalid weight'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'user_id': user_id, 'weight': weight, 'goals': goals})
+        athlete_info, created = AthleteInfo.objects.get_or_create(user_id=user)
+        serializer = AthleteInfoSerializer(athlete_info)
+        return Response(serializer.data)
 
     def put(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
         weight = request.query_params.get('weight')
         goals = request.query_params.get('goals')
+        print(weight, goals)
         if weight is None or 0 < int(weight) < 900:
-            athlete, created = AthleteInfo.objects.update_or_create(
+            athlete_info, created = AthleteInfo.objects.update_or_create(
                 user_id=user,
                 defaults={
                     'weight': weight,
@@ -113,8 +106,5 @@ class AthleteInfoAPIView(APIView):
             )
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        return Response({
-            "user_id": user_id,
-            "weight": weight,
-            "goals": goals,
-        }, status=status.HTTP_201_CREATED)
+        serializer = AthleteInfoSerializer(athlete_info)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
