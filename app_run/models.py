@@ -16,5 +16,5 @@ class Run(models.Model):
 
 class AthleteInfo(models.Model):
     user_id = models.OneToOneField(User, on_delete = models.CASCADE, primary_key=True)
-    weight = models.TextField(null=True, blank=True, default='50')
-    goals = models.TextField(null=True, blank=True, default='Нет цели')
+    weight = models.TextField(null=True, blank=True)
+    goals = models.TextField(null=True, blank=True)
