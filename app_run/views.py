@@ -5,7 +5,8 @@ from rest_framework import viewsets
 from urllib3 import request
 
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
-from .models import Run, AthleteInfo
+from .serializers import ChallengeSerializer
+from .models import Run, AthleteInfo, Challenge
 from django.contrib.auth.models import User
 from project_run.settings import base
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -81,6 +82,17 @@ class StopRunAPIView(APIView):
         else:
             run.status = 'finished'
             run.save()
+
+            finished_runs = Run.objects.filter(athlete=run.athlete,
+                                               status='finished').count()
+            if finished_runs == 10:
+                Challenge.objects.get_or_create(
+                    athlete=run.athlete,
+                    defaults={
+                        'full_name': 'Сделай 10 Забегов!'
+                    }
+                )
+
             return Response({"status": "updated"})
 
 
@@ -107,3 +119,10 @@ class AthleteInfoAPIView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         serializer = AthleteInfoSerializer(athlete_info)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Challenge.objects.all()
+    serializer_class = ChallengeSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['athlete']
