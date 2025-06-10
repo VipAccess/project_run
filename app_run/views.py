@@ -5,8 +5,8 @@ from rest_framework import viewsets
 from urllib3 import request
 
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
-from .serializers import ChallengeSerializer
-from .models import Run, AthleteInfo, Challenge
+from .serializers import ChallengeSerializer, PositionSerializer
+from .models import Run, AthleteInfo, Challenge, Position
 from django.contrib.auth.models import User
 from project_run.settings import base
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -126,3 +126,10 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ChallengeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['athlete']
+
+
+class PositionViewSet(viewsets.ModelViewSet):
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['run']

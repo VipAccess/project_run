@@ -22,13 +22,14 @@ from django.conf import settings
 from app_run.models import Challenge
 from app_run.views import company_details, RunViewSet, UserViewSet
 from app_run.views import StartRunAPIView, StopRunAPIView, AthleteInfoAPIView
-from app_run.views import ChallengeViewSet
+from app_run.views import ChallengeViewSet, PositionViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('api/runs', RunViewSet)
 router.register('api/users', UserViewSet)
 router.register('api/challenges', ChallengeViewSet)
+router.register('api/positions', PositionViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
