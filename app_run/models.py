@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Run(models.Model):
@@ -27,5 +28,5 @@ class Challenge(models.Model):
 
 class Position(models.Model):
     run = models.ForeignKey(Run, on_delete=models.CASCADE)
-    latitude = models.DecimalField(max_digits=9, decimal_places=4,)
-    longitude = models.DecimalField(max_digits=9, decimal_places=4,)
+    latitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+    longitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
