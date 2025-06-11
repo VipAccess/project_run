@@ -80,7 +80,7 @@ class StopRunAPIView(APIView):
         if run.status != 'in_progress':
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
-            positions = run.positions.all().order_by('timestamp')
+            positions = run.positions.all()
 
             total_distance = 0.0
             prev_point = None
@@ -88,10 +88,10 @@ class StopRunAPIView(APIView):
             for position in positions:
                 current_point = (position.latitude, position.longitude)
                 if prev_point:
-                    total_distance += geodesic(prev_point, current_point).km
+                    total_distance += geodesic(prev_point, current_point).kilometers
                 prev_point = current_point
 
-            run.distance = round(total_distance, 3)
+            run.distance = total_distance
             run.status = 'finished'
             run.save()
 
