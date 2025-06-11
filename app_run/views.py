@@ -15,7 +15,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
-
+from geopy.distance import geodesic
 
 @api_view(['GET'])
 def company_details(request):
@@ -80,6 +80,18 @@ class StopRunAPIView(APIView):
         if run.status != 'in_progress':
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
+            positions = run.positions.all().order_by('timestamp')
+
+            total_distance = 0.0
+            prev_point = None
+
+            for position in positions:
+                current_point = (position.latitude, position.longitude)
+                if prev_point:
+                    total_distance += geodesic(prev_point, current_point).km
+                prev_point = current_point
+
+            run.distance = round(total_distance, 3)
             run.status = 'finished'
             run.save()
 
