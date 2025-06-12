@@ -80,7 +80,7 @@ class StopRunAPIView(APIView):
         if run.status != 'in_progress':
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
-            positions = run.positions.all()
+            positions = run.position_set.all()
 
             total_distance = 0.0
             prev_point = None
