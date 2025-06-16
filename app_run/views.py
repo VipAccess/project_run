@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
+from django.db.models import Sum
 
 @api_view(['GET'])
 def company_details(request):
@@ -102,6 +103,19 @@ class StopRunAPIView(APIView):
                     athlete=run.athlete,
                     defaults={
                         'full_name': 'Сделай 10 Забегов!'
+                    }
+                )
+
+            total_distance_sum = Run.objects.filter(
+                athlete=run.athlete,
+                status='finished'
+            ).aggregate(Sum('distance'))['distance__sum'] or 0
+
+            if total_distance_sum >= 50:
+                Challenge.objects.get_or_create(
+                    athlete=run.athlete,
+                    defaults={
+                        'full_name': 'Пробеги 50 километров!'
                     }
                 )
 
