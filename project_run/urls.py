@@ -41,3 +41,5 @@ urlpatterns = [
     path('api/athlete_info/<int:user_id>/', AthleteInfoAPIView.as_view()),
     path('api/upload_file/', UploadFileAPIView.as_view())
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

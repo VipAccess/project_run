@@ -7,7 +7,8 @@ from urllib3 import request
 from rest_framework.parsers import MultiPartParser
 from openpyxl import load_workbook
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
-from .serializers import ChallengeSerializer, PositionSerializer, CollectibleItemSerializer
+from .serializers import ChallengeSerializer, PositionSerializer, \
+    CollectibleItemSerializer
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
 from project_run.settings import base
@@ -19,6 +20,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
 from django.db.models import Sum
+
 
 @api_view(['GET'])
 def company_details(request):
@@ -91,7 +93,8 @@ class StopRunAPIView(APIView):
             for position in positions:
                 current_point = (position.latitude, position.longitude)
                 if prev_point:
-                    total_distance += geodesic(prev_point, current_point).kilometers
+                    total_distance += geodesic(prev_point,
+                                               current_point).kilometers
                 prev_point = current_point
 
             run.distance = total_distance
@@ -169,48 +172,61 @@ class CollectibleItemViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UploadFileAPIView(APIView):
-    parser_classes = (MultiPartParser,)
+    parser_classes = [MultiPartParser]
 
     def post(self, request):
         if 'file' not in request.FILES:
-            return Response({"error": "No file uploaded"},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
         file = request.FILES['file']
         if not file.name.endswith('.xlsx'):
-            return Response({"error": "File must be .xlsx format"},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "File must be in XLSX format"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            wb = load_workbook(file)
+            wb = load_workbook(filename=io.BytesIO(file.read()))
             sheet = wb.active
             invalid_rows = []
             created_count = 0
 
-            for row in sheet.iter_rows(values_only=True):
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # пропускаем заголовок
                 try:
-                    # Проверяем, что строка содержит все необходимые данные
-                    if len(row) < 5 or None in row:
+                    # Валидация данных
+                    if len(row) != 6:
                         invalid_rows.append(list(row))
                         continue
 
-                    # Создаем объект через сериализатор для валидации
-                    data = {
-                        'name': str(row[0]),
-                        'latitude': float(row[1]),
-                        'longitude': float(row[2]),
-                        'picture': str(row[3]),
-                        'value': int(row[4])
-                    }
+                    name, uid, lat, lon, picture, value = row
 
-                    serializer = CollectibleItemSerializer(data=data)
-                    if serializer.is_valid():
-                        serializer.save()
-                        created_count += 1
-                    else:
+                    # Проверка типов данных
+                    if not isinstance(name, str) or not isinstance(uid, str) or not isinstance(picture, str):
                         invalid_rows.append(list(row))
+                        continue
 
-                except (ValueError, TypeError):
+                    try:
+                        lat = float(lat)
+                        lon = float(lon)
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        invalid_rows.append(list(row))
+                        continue
+
+                    # Проверка диапазонов
+                    if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+                        invalid_rows.append(list(row))
+                        continue
+
+                    # Создание объекта
+                    CollectibleItem.objects.create(
+                        name=name,
+                        uid=uid,
+                        latitude=lat,
+                        longitude=lon,
+                        picture=picture,
+                        value=value
+                    )
+                    created_count += 1
+
+                except Exception as e:
                     invalid_rows.append(list(row))
 
             return Response({
@@ -219,5 +235,4 @@ class UploadFileAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": str(e)},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
