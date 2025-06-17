@@ -3,6 +3,19 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
 from urllib3 import request
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError as DjangoValidationError
+import re
+
+URL_PATTERN = re.compile(
+    r'^(https?://)?'  # протокол (http или https)
+    r'(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)'  # домен
+    r'(:\d+)?'  # порт
+    r'(/[^?#]*)?'  # путь
+    r'(\?[^#]*)?'  # query строка
+    r'(#.*)?$',  # якорь
+    re.IGNORECASE
+)
 
 from rest_framework.parsers import MultiPartParser
 from openpyxl import load_workbook
@@ -198,7 +211,20 @@ class UploadFileAPIView(APIView):
                     name, uid, lat, lon, picture, value = row
 
                     # Проверка типов данных
-                    if not isinstance(name, str) or not isinstance(uid, str) or not isinstance(picture, str):
+                    if (not isinstance(name, str) or not isinstance(uid, str) or
+                        not isinstance(picture, str)):
+                        invalid_rows.append(list(row))
+                        continue
+
+                    # Проверка URL
+                    if not URL_PATTERN.match(picture):
+                        invalid_rows.append(list(row))
+                        continue
+
+                    # Альтернативная проверка URL с использованием Django URLValidator
+                    try:
+                        URLValidator()(picture)
+                    except DjangoValidationError:
                         invalid_rows.append(list(row))
                         continue
 
