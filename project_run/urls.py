@@ -39,5 +39,5 @@ urlpatterns = [
     path('api/runs/<int:run_id>/start/', StartRunAPIView.as_view()),
     path('api/runs/<int:run_id>/stop/', StopRunAPIView.as_view()),
     path('api/athlete_info/<int:user_id>/', AthleteInfoAPIView.as_view()),
-    path('api/upload_file', UploadFileAPIView.as_view())
+    path('api/upload_file/', UploadFileAPIView.as_view())
 ]
