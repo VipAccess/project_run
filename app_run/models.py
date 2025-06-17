@@ -31,3 +31,12 @@ class Position(models.Model):
     run = models.ForeignKey(Run, on_delete=models.CASCADE)
     latitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
     longitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
+
+
+class CollectibleItem(models.Model):
+    name = models.TextField()
+    uid = models.CharField(max_length=15)
+    latitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+    longitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
+    picture = models.URLField()
+    value = models.IntegerField()

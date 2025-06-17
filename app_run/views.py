@@ -4,9 +4,11 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from urllib3 import request
 
+from rest_framework.parsers import MultiPartParser
+from openpyxl import load_workbook
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
-from .serializers import ChallengeSerializer, PositionSerializer
-from .models import Run, AthleteInfo, Challenge, Position
+from .serializers import ChallengeSerializer, PositionSerializer, CollectibleItemSerializer
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
 from project_run.settings import base
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -159,3 +161,63 @@ class PositionViewSet(viewsets.ModelViewSet):
     serializer_class = PositionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['run']
+
+
+class CollectibleItemViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CollectibleItem.objects.all()
+    serializer_class = CollectibleItemSerializer
+
+
+class UploadFileAPIView(APIView):
+    parser_classes = (MultiPartParser,)
+
+    def post(self, request):
+        if 'file' not in request.FILES:
+            return Response({"error": "No file uploaded"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        file = request.FILES['file']
+        if not file.name.endswith('.xlsx'):
+            return Response({"error": "File must be .xlsx format"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            wb = load_workbook(file)
+            sheet = wb.active
+            invalid_rows = []
+            created_count = 0
+
+            for row in sheet.iter_rows(values_only=True):
+                try:
+                    # Проверяем, что строка содержит все необходимые данные
+                    if len(row) < 5 or None in row:
+                        invalid_rows.append(list(row))
+                        continue
+
+                    # Создаем объект через сериализатор для валидации
+                    data = {
+                        'name': str(row[0]),
+                        'latitude': float(row[1]),
+                        'longitude': float(row[2]),
+                        'picture': str(row[3]),
+                        'value': int(row[4])
+                    }
+
+                    serializer = CollectibleItemSerializer(data=data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        created_count += 1
+                    else:
+                        invalid_rows.append(list(row))
+
+                except (ValueError, TypeError):
+                    invalid_rows.append(list(row))
+
+            return Response({
+                "created": created_count,
+                "invalid_rows": invalid_rows
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Run, AthleteInfo, Challenge, Position
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
 
 
@@ -70,3 +70,28 @@ class PositionSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+
+class CollectibleItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectibleItem
+        fields = '__all__'
+
+    def validate_latitude(self, value):
+        if not (-90 <= float(value) <= 90):
+            raise serializers.ValidationError(
+                "Широта должна быть между -90 и 90")
+        return value
+
+    def validate_longitude(self, value):
+        if not (-180 <= float(value) <= 180):
+            raise serializers.ValidationError(
+                "Долгота должна быть между -180 и 180")
+        return value
+
+    def validate_value(self, value):
+        if value < 0:
+            raise serializers.ValidationError(
+                "Значение должно быть положительным")
+        return value
+
