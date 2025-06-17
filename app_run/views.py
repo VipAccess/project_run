@@ -20,7 +20,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
 from django.db.models import Sum
-
+import io
 
 @api_view(['GET'])
 def company_details(request):
