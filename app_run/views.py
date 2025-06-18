@@ -2,22 +2,6 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
-from urllib3 import request
-from django.core.validators import URLValidator
-from django.core.exceptions import ValidationError as DjangoValidationError
-import re
-
-URL_PATTERN = re.compile(
-    r'^(https?://)?'  # протокол (http или https)
-    r'(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)'  # домен
-    r'(:\d+)?'  # порт
-    r'(/[^?#]*)?'  # путь
-    r'(\?[^#]*)?'  # query строка
-    r'(#.*)?$',  # якорь
-    re.IGNORECASE
-)
-
-from rest_framework.parsers import MultiPartParser
 from openpyxl import load_workbook
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
 from .serializers import ChallengeSerializer, PositionSerializer, \
@@ -33,7 +17,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
 from django.db.models import Sum
-import io
 
 @api_view(['GET'])
 def company_details(request):
@@ -184,81 +167,33 @@ class CollectibleItemViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CollectibleItemSerializer
 
 
-class UploadFileAPIView(APIView):
-    parser_classes = [MultiPartParser]
+@api_view(['POST'])
+def upload_view(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        uploaded_xlsx_file = request.FILES['file']
+        wb = load_workbook(uploaded_xlsx_file, data_only=True)
+        sheet = wb.active
+        wrong_rows_list = []
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
+            name, uid, value, latitude, longitude, picture = row
+            data = {
+                'name': name,
+                'uid': uid,
+                'latitude': latitude,
+                'longitude': longitude,
+                'picture': picture,
+                'value': value,
+            }
+            serializer = CollectibleItemSerializer(data=data)
+            if serializer.is_valid():
+                CollectibleItem.objects.create(name=name,
+                                               uid=uid,
+                                               value=value,
+                                               latitude=latitude,
+                                               longitude=longitude,
+                                               picture=picture)
+            else:
+                wrong_rows_list.append([name, uid, value, latitude, longitude, picture])
 
-    def post(self, request):
-        if 'file' not in request.FILES:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
-        file = request.FILES['file']
-        if not file.name.endswith('.xlsx'):
-            return Response({"error": "File must be in XLSX format"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            wb = load_workbook(filename=io.BytesIO(file.read()))
-            sheet = wb.active
-            invalid_rows = []
-            created_count = 0
-
-            for row in sheet.iter_rows(min_row=2, values_only=True):  # пропускаем заголовок
-                try:
-                    # Валидация данных
-                    if len(row) != 6:
-                        invalid_rows.append(list(row))
-                        continue
-
-                    name, uid, lat, lon, picture, value = row
-
-                    # Проверка типов данных
-                    if (not isinstance(name, str) or not isinstance(uid, str) or
-                        not isinstance(picture, str)):
-                        invalid_rows.append(list(row))
-                        continue
-
-                    # Проверка URL
-                    if not URL_PATTERN.match(picture):
-                        invalid_rows.append(list(row))
-                        continue
-
-                    # Альтернативная проверка URL с использованием Django URLValidator
-                    try:
-                        URLValidator()(picture)
-                    except DjangoValidationError:
-                        invalid_rows.append(list(row))
-                        continue
-
-                    try:
-                        lat = float(lat)
-                        lon = float(lon)
-                        value = int(value)
-                    except (ValueError, TypeError):
-                        invalid_rows.append(list(row))
-                        continue
-
-                    # Проверка диапазонов
-                    if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
-                        invalid_rows.append(list(row))
-                        continue
-
-                    # Создание объекта
-                    CollectibleItem.objects.create(
-                        name=name,
-                        uid=uid,
-                        latitude=lat,
-                        longitude=lon,
-                        picture=picture,
-                        value=value
-                    )
-                    created_count += 1
-
-                except Exception as e:
-                    invalid_rows.append(list(row))
-
-            return Response({
-                "created": created_count,
-                "invalid_rows": invalid_rows
-            }, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(wrong_rows_list)
+    return Response([])

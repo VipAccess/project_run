@@ -22,7 +22,7 @@ from django.conf import settings
 from app_run.models import Challenge, CollectibleItem
 from app_run.views import company_details, RunViewSet, UserViewSet
 from app_run.views import StartRunAPIView, StopRunAPIView, AthleteInfoAPIView
-from app_run.views import ChallengeViewSet, PositionViewSet, UploadFileAPIView, CollectibleItemViewSet
+from app_run.views import ChallengeViewSet, PositionViewSet, upload_view, CollectibleItemViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -39,7 +39,5 @@ urlpatterns = [
     path('api/runs/<int:run_id>/start/', StartRunAPIView.as_view()),
     path('api/runs/<int:run_id>/stop/', StopRunAPIView.as_view()),
     path('api/athlete_info/<int:user_id>/', AthleteInfoAPIView.as_view()),
-    path('api/upload_file/', UploadFileAPIView.as_view())
+    path('api/upload_file/', upload_view),
 ]
-
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
