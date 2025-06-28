@@ -3,7 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
 from openpyxl import load_workbook
-from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
+from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer, \
+    AthleteDetailSerializer
 from .serializers import ChallengeSerializer, PositionSerializer, \
     CollectibleItemSerializer
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
@@ -51,6 +52,13 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name']
     ordering_fields = ['date_joined']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return UserSerializer
+        elif self.action == 'retrieve':
+            return AthleteDetailSerializer
+        return super().get_serializer_class()
 
     def get_queryset(self):
         qs = self.queryset
@@ -160,6 +168,15 @@ class PositionViewSet(viewsets.ModelViewSet):
     serializer_class = PositionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['run']
+
+    def perform_create(self, serializer):
+        position = serializer.save()
+        athlete_position = (position.latitude, position.longitude)
+        for item in CollectibleItem.objects.all():
+            item_position = (item.latitude, item.longitude)
+            distance_to_item = geodesic(item_position, athlete_position).meters
+            if distance_to_item <= 100:
+                item.users.add(position.run.athlete_id)
 
 
 class CollectibleItemViewSet(viewsets.ReadOnlyModelViewSet):

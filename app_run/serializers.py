@@ -87,3 +87,11 @@ class CollectibleItemSerializer(serializers.ModelSerializer):
         if value > 180 or value < -180:
             raise serializers.ValidationError('longitude должен быть в диапазоне от -180.0 до +180.0 градусов')
         return value
+
+
+class AthleteDetailSerializer(UserSerializer):
+    items = CollectibleItemSerializer(many=True, read_only=True,
+                                      source='collectible_items')
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['items']

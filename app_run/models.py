@@ -40,3 +40,5 @@ class CollectibleItem(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=4, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
     picture = models.URLField()
     value = models.IntegerField()
+    users = models.ManyToManyField(User, blank=True,
+                                   related_name='collectible_items')
