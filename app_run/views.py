@@ -130,8 +130,8 @@ class StopRunAPIView(APIView):
                 )
 
             first_position = Position.objects.filter(run=run).order_by(
-                'id').first()
-            last_position = Position.objects.filter(run=run).order_by('id').last()
+                'date_time').first()
+            last_position = Position.objects.filter(run=run).order_by('date_time').last()
 
             time_difference = last_position.date_time - first_position.date_time
             run.run_time_seconds = time_difference.total_seconds()
