@@ -19,6 +19,7 @@ from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
 from django.db.models import Sum
 
+
 @api_view(['GET'])
 def company_details(request):
     return Response({
@@ -128,8 +129,15 @@ class StopRunAPIView(APIView):
                     }
                 )
 
-            return Response({"status": "updated"})
+            first_position = Position.objects.filter(run=run).order_by(
+                'id').first()
+            last_position = Position.objects.filter(run=run).order_by('id').last()
 
+            time_difference = last_position.date_time - first_position.date_time
+            run.run_time_seconds = time_difference.total_seconds()
+            run.save()
+
+            return Response({"status": "updated"})
 
 class AthleteInfoAPIView(APIView):
     def get(self, request, user_id):
@@ -191,7 +199,8 @@ def upload_view(request):
         wb = load_workbook(uploaded_xlsx_file, data_only=True)
         sheet = wb.active
         wrong_rows_list = []
-        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row,
+                                   values_only=True):
             name, uid, value, latitude, longitude, picture = row
             data = {
                 'name': name,
@@ -210,7 +219,8 @@ def upload_view(request):
                                                longitude=longitude,
                                                picture=picture)
             else:
-                wrong_rows_list.append([name, uid, value, latitude, longitude, picture])
+                wrong_rows_list.append(
+                    [name, uid, value, latitude, longitude, picture])
 
         return Response(wrong_rows_list)
     return Response([])
