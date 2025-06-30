@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
-from django.core.validators import URLValidator
 
 
 class UserForRunSerializer(serializers.ModelSerializer):
@@ -37,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_runs_finished(self, obj):
         return obj.run_set.filter(status='finished').count()
+
 
 
 class AthleteInfoSerializer(serializers.ModelSerializer):

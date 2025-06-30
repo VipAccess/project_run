@@ -17,7 +17,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from geopy.distance import geodesic
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
 
 
 @api_view(['GET'])
@@ -64,6 +64,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = self.queryset
         type_user = self.request.query_params.get('type', None)
+        qs = qs.annotate(
+            runs_finished_count=Count('run', filter=Q(run__status='finished')))
         if type_user == 'coach':
             qs = qs.filter(is_staff=True, is_superuser=False)
         elif type_user == 'athlete':
@@ -131,13 +133,15 @@ class StopRunAPIView(APIView):
 
             first_position = Position.objects.filter(run=run).order_by(
                 'date_time').first()
-            last_position = Position.objects.filter(run=run).order_by('date_time').last()
+            last_position = Position.objects.filter(run=run).order_by(
+                'date_time').last()
 
             time_difference = last_position.date_time - first_position.date_time
             run.run_time_seconds = time_difference.total_seconds()
             run.save()
 
             return Response({"status": "updated"})
+
 
 class AthleteInfoAPIView(APIView):
     def get(self, request, user_id):
