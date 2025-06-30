@@ -136,8 +136,11 @@ class StopRunAPIView(APIView):
             last_position = Position.objects.filter(run=run).order_by(
                 'date_time').last()
 
-            time_difference = last_position.date_time - first_position.date_time
-            run.run_time_seconds = time_difference.total_seconds()
+            if first_position and last_position:
+                time_difference = last_position.date_time - first_position.date_time
+                run.run_time_seconds = time_difference.total_seconds()
+            else:
+                run.run_time_seconds = 0
             run.save()
 
             return Response({"status": "updated"})
