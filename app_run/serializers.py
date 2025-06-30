@@ -1,3 +1,4 @@
+from django.db.models import IntegerField
 from rest_framework import serializers
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
@@ -19,7 +20,7 @@ class RunSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
-    runs_finished = serializers.SerializerMethodField()
+    runs_finished = serializers.IntegerField()
 
     class Meta:
         model = User
@@ -33,10 +34,6 @@ class UserSerializer(serializers.ModelSerializer):
             else:
                 return "athlete"
         return None
-
-    def get_runs_finished(self, obj):
-        return obj.run_set.filter(status='finished').count()
-
 
 
 class AthleteInfoSerializer(serializers.ModelSerializer):
@@ -53,6 +50,7 @@ class ChallengeSerializer(serializers.ModelSerializer):
 
 class PositionSerializer(serializers.ModelSerializer):
     date_time = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%S.%f')
+
     class Meta:
         model = Position
         fields = ['id', 'run', 'latitude', 'longitude', 'date_time']
@@ -81,12 +79,14 @@ class CollectibleItemSerializer(serializers.ModelSerializer):
 
     def validate_latitude(self, value):
         if value > 90 or value < -90:
-            raise serializers.ValidationError('latitude должен быть в диапазоне от -90.0 до +90.0 градусов')
+            raise serializers.ValidationError(
+                'latitude должен быть в диапазоне от -90.0 до +90.0 градусов')
         return value
 
     def validate_longitude(self, value):
         if value > 180 or value < -180:
-            raise serializers.ValidationError('longitude должен быть в диапазоне от -180.0 до +180.0 градусов')
+            raise serializers.ValidationError(
+                'longitude должен быть в диапазоне от -180.0 до +180.0 градусов')
         return value
 
 

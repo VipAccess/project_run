@@ -70,7 +70,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(is_staff=False, is_superuser=False)
         else:
             qs = qs.filter(is_superuser=False)
-        #qs = qs.annotate(runs_finished=Count('run', filter=Q(run__status='finished')))
+        qs = qs.annotate(runs_finished=Count('run', filter=Q(run__status='finished')))
         return qs
 
 
