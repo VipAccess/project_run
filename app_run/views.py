@@ -64,14 +64,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = self.queryset
         type_user = self.request.query_params.get('type', None)
-        qs = qs.annotate(
-            runs_finished_count=Count('run', filter=Q(run__status='finished')))
         if type_user == 'coach':
             qs = qs.filter(is_staff=True, is_superuser=False)
         elif type_user == 'athlete':
             qs = qs.filter(is_staff=False, is_superuser=False)
         else:
             qs = qs.filter(is_superuser=False)
+        qs = qs.annotate(
+            runs_finished_count=Count('run', filter=Q(run__status='finished')))
         return qs
 
 
