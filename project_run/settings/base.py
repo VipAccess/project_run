@@ -114,3 +114,12 @@ STATIC_ROOT = 'static'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Company details
+
+COMPANY_NAME = 'RunFlow'
+COMPANY_SLOGAN = 'Беги с умом – беги с RunFlow'
+COMPANY_CONTACTS = 'Город Минск, улица Спортивная, 17, офис 42'
+
+
